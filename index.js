@@ -78,6 +78,13 @@ const addEmp = () =>{
             type: 'number',
             name: "salary",
             message: "What is this employees salary",
+        
+        },
+        {
+            type: 'list',
+            name: "salary",
+            message: "What is this employees salary",
+        
         }
     ]).then (answers =>{
         connection.query(
