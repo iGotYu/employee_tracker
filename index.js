@@ -1,223 +1,286 @@
-const inquirer = require('inquirer');
-const mysql = require('mysql');
+const inquirer = require("inquirer");
+const connection = require("./connection.js");
 
-const connection = mysql.createConnection({
-    host: 'localhost',
-    PORT: 3000,
-    user: 'root',
-    password: 'password',
-    database: "employee_tracker_DB"
-})
-
-const startQuest = () =>{
-    inquirer.prompt([
-        {
-            type:'list',
-            message: "What prompt would you like to do?",
-            choices: ['View Departments', 'View Employees', 'View Roles', 'Add Department', 'Add Employee', 'Update Employee Role', 'Quit'],
-            name: "start"
-        }
-    ]).then (answers =>{
-        switch(answers.action){
-            case 'View Departments':
-                showDpt();
-                break;
-            case 'View Employees':
-                showEmployees();
-                console.log('Show the employees')
-                break; 
-            case 'View Roles':
-                showRoles();
-                console.log('Show the Roles')
-                break;
-            case 'Add Department':
-                addDept();
-                break;
-            case 'Add Employees':
-                addEmp();
-                break; 
-            case 'Add Role':
-                addRole();
-                break;
-            case 'Update Employee Role':
-                updateRole();
-                break;
-            default:
-                break;
-        }
-    })
-}
+const startQuest = () => {
+  inquirer
+    .prompt([
+      {
+        type: "list",
+        message: "What prompt would you like to do?",
+        choices: [
+          "View All Departments",
+          "View All Employees",
+          "View All Roles",
+          "Add Department",
+          "Remove Department",
+          "Add Employee",
+          "Remove Employee",
+          "Add Role",
+          "Update Employee Role",
+          "Quit",
+        ],
+        name: "start",
+      },
+    ])
+    .then((answers) => {
+      switch (answers.start) {
+        case "View All Departments":
+          showDpt();
+          break;
+        case "View All Employees":
+          showEmployees();
+          break;
+        case "View All Roles":
+          showRoles();
+          break;
+        case "Add Department":
+          addDept();
+          break;
+        case "Remove Department":
+          deleteDept();
+          break;
+        case "Add Employee":
+          addEmp();
+          break;
+        case "Remove Employee":
+          deleteEmp();
+          break;
+        case "Add Role":
+          addRole();
+          break;
+        case "Update Employee Role":
+          updateRole();
+          break;
+        case "Quit":
+          console.log("Here is your team");
+          connection.end();
+        default:
+          break;
+      }
+    });
+};
 
 startQuest();
- 
-const addEmp = () =>{
-    inquirer.prompt([
+
+const addEmp = () => {
+  inquirer
+    .prompt([
+      {
+        type: "input",
+        name: "firstName",
+        message: "Whats the first name of the Employee?",
+      },
+      {
+        type: "input",
+        name: "lastName",
+        message: "Whats the last name of the Employee?",
+      },
+      {
+        type: "input",
+        name: "role",
+        message: "Enter the Employee's role id",
+      },
+      {
+        type: "input",
+        name: "managerid",
+        message: "Enter the Employee's manager id",
+      },
+    
+    ])
+    .then((answers) => {
+      connection.query(
+        "INSERT INTO employee SET ?",
         {
-            type: 'input',
-            name: "firstName",
-            message: "Whats the first name of the Employee?"
+          first_name: answers.firstName,
+          last_name: answers.lastName,
+          role_id: answers.role,
+          manager_id: answers.managerid,
         },
-        {
-            type: 'input',
-            name: "lastName",
-            message: "Whats the last name of the Employee?"
-        },
-        {
-            type: 'list',
-            name: "role",
-            message: "Select the Role",
-            choices: ["Sales Associate", "Stock Supervisor", "Floor Supervisor", "Assistant Manager", "General Manager"]
-        },
-        {
-            type: 'list',
-            name: "department",
-            message: "Select the Department",
-            choices: ["Sales", "Stock", "Management"]
-        },
-        {
-            type: 'number',
-            name: "salary",
-            message: "What is this employees salary",
-        
-        },
-        {
-            type: 'list',
-            name: "salary",
-            message: "What is this employees salary",
-        
+        (err, res) => {
+          if (err) throw err;
+          showEmployees();
+          startQuest();
         }
-    ]).then (answers =>{
-        connection.query(
-            "INSERT INTO employee SET ?",
-            {
-                first_name: answers.firstName,
-                last_name: answers.lastName,
-                role: answers.role,
-                department: answers.department,
-                salary: answers.salary
-            },
-            (err,res) =>{
-                if (err) throw err;
-                console.table(res)
-                startQuest();
-            })
-        })
-    }
-
-const addDept =() =>{
-    inquirer.prompt([
-        {
-            type: 'list',
-            message: "What is the Department name?",
-            choices: ["Sales", "Stock", "Management", "Add new Department"],
-            name: "department"
-        }
-    ]).then (answers =>{
-        connection.query(
-            "INSERT INTO department SET name =?", answers.department,
-            (err, res)=> {
-                if (err) throw err;
-                console.table(res)
-                startQuest();
-            }
-        )
-    })
-}
-
-const addRole = () =>{
-    inquirer.prompt([
-        {
-            type: 'input',
-            message: "What is the employee's first name?",
-            name:'firstName'
-        },
-        {
-            type: 'input',
-            message: "What is the employee's last name?",
-            name:'lastName'
-        },
-        {
-            type: 'list',
-            message: "What is the employee's role",
-            choices: ["Sales Associate", "Stock Supervisor", "Floor Supervisor", "Assistant Manager", "General Manager"],
-            name:'role'
-        },
-    ]).then (answers =>{
-        connection.query(
-            "INSERT INTO role SET ?",
-            {
-                first_name: answers.firstName,
-                last_name: answers.lastName,
-                role: answers.role
-            },
-            (err, res) =>{
-                if (err) throw err;
-                console.table(res)
-                startQuest();
-            }
-        )
-    })
-}
-
-const updateRole = () =>{
-    inquirer.prompt([
-        {
-            type:'list',
-            message: "Which employee's role would you like to update",
-            choices: [],
-            name: 'name'
-        },
-        {
-            type:'list',
-            message: "What should the role be updated to",
-            choices: [],
-            name: 'role'
-        },
-    ]).then (answers =>{
-        connection.query(
-            "SELECT name,role FROM ?",
-            {
-                role : answers.role
-            },
-            (err, res) => {
-                if (err) throw err;
-                console.table(res)
-                startQuest();
-            }
-        )
-    })
-}
-
-const showRoles = () =>{
-    console.log("Showing employees by role ...\n");
-    connection.query('SELECT * FORM role', (err, res) =>{
-        if (err) throw err;
-        console.table(res);
-    })
-    startQuest();
+      );
+    });
 };
 
-const showEmployees = () =>{
-    console.log ("Showing all employees...\n");
-    connection.query('SELECT * FROM role', (err, res) =>{
-        if (err) throw err;
-        console.table(res);
-    })
-    startQuest();
-};
-
-const showDpt = () =>{
-    console.log ("Showing all departments... \n");
-    connection.query('SELECT * FROM department', (err, res) =>{
-        if (err) throw err;
-        console.table(res);
-    })
-    startQuest();
-};
-
-
-connection.connect((err) => {
+const deleteEmp =() => {
+  inquirer.prompt([
+  {
+    type: "input",
+    message: "which employee id would you like to delete?",
+    name: "delemp",
+  },
+]).then ((answers) => {
+  connection.query(
+    "DELETE FROM employee WHERE id = ?",
+    answers.delemp,
+    (err, res) =>{
     if (err) throw err;
-    console.log("config done!")
+    showEmployees();
+    console.log("\n");
     startQuest();
-})
+    }
+  );
+});
+};
+
+
+const addDept = () => {
+  inquirer
+    .prompt([
+      {
+        type: "input",
+        message: "What Department name would you like to add?",
+        name: "department",
+      },
+    ])
+    .then((answers) => {
+      connection.query(
+        "INSERT INTO department SET name = ?",
+        answers.department,
+        (err, res) => {
+          if (err) throw err;
+          showDpt();
+
+          console.log("\n");
+
+          startQuest();
+        }
+      );
+    });
+};
+
+const deleteDept = () => {
+  inquirer.prompt([
+    {
+      type: "input",
+      message: "which department id would you like to delete?",
+      name: "deldept",
+    },
+  ]).then ((answers) => {
+    connection.query(
+      "DELETE FROM department WHERE id = ?",
+      answers.deldept,
+      (err, res) =>{
+      if (err) throw err;
+      showDpt();
+      console.log("\n");
+      startQuest();
+      }
+    );
+  });
+};
+
+const addRole = () => {
+  inquirer
+    .prompt([
+      {
+        type: "input",
+        message: "What is the employee's first name?",
+        name: "firstName",
+      },
+      {
+        type: "input",
+        message: "What is the employee's last name?",
+        name: "lastName",
+      },
+      {
+        type: "list",
+        message: "What is the employee's role",
+        choices: [
+          "Sales Associate",
+          "Stock Supervisor",
+          "Floor Supervisor",
+          "Assistant Manager",
+          "General Manager",
+        ],
+        name: "role",
+      },
+    ])
+    .then((answers) => {
+      connection.query(
+        "INSERT INTO role SET ?",
+        {
+          first_name: answers.firstName,
+          last_name: answers.lastName,
+          role: answers.role,
+        },
+        (err, res) => {
+          if (err) throw err;
+          console.table(res);
+          startQuest();
+        }
+      );
+    });
+};
+
+const updateRole = () => {
+  inquirer
+    .prompt([
+      {
+        type: "input",
+        message: "Which employee's role would you like to update",
+        name: "name",
+      },
+      {
+        type: "input",
+        message: "What should the role be updated to",
+        name: "role",
+      },
+    ])
+    .then((answers) => {
+      connection.query(
+        "UPDATE employee SET role_id = ?  WHERE id = ?;",
+        [answers.role, answers.name],
+        (err, res) => {
+          if (err) throw err;
+          showEmployees();
+          startQuest();
+        }
+      );
+    });
+};
+
+const showRoles = () => {
+  connection.query("SELECT * FROM role", (err, res) => {
+    if (err) throw err;
+    console.table(res);
+  });
+  startQuest();
+};
+
+const showEmployees = () => {
+  connection
+    .query(
+      ` 
+      SELECT
+      employee.id,
+      employee.first_name,
+      employee.last_name,
+      role.title,
+      department.name AS department,
+      role.salary,
+      CONCAT(manager.first_name,' ',manager.last_name) AS manager
+  FROM
+      employee
+          LEFT JOIN role on employee.role_id = role.id
+          LEFT JOIN department on role.department_id = department.id
+          LEFT JOIN employee manager on manager.id = employee.manager_id;
+`
+    )
+    .then((res) => {
+      console.table(res);
+      startQuest();
+    });
+};
+
+const showDpt = () => {
+  connection.query("SELECT * FROM department", (err, res) => {
+    if (err) throw err;
+    console.log("\n");
+    console.table(res);
+  });
+  startQuest();
+};
